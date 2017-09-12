@@ -1,0 +1,369 @@
+/* Add dependencies */
+const jQuery = require('jquery');
+
+global.jQuery = global.$ = jQuery;
+
+/* Mock implementations */
+const mocks = {
+    windowHeight: 100
+}
+window = Object.assign(window, { innerHeight: mocks.windowHeight });
+
+require('../jquery.lazyload');
+
+const defaultOptions = {
+    threshold   : 0,
+    placeholder : "data:image/gif;base64,R0lGODdhAQABAPAAAMPDwwAAACwAAAAAAQABAAACAkQBADs="
+};
+
+describe('general', () => {
+    it('should add lazyload() function to global {jQuery} object', () => {
+        expect($.fn).toHaveProperty('lazyload');
+        expect(typeof $.fn.lazyload).toBe('function');
+    });
+});
+
+describe('$.fn.lazyload()', () => {
+    it('should add \'appear\' listener', () => {
+        const $img = $('<img>');
+        $img.lazyload();
+
+        expect(jQuery._data($img[0], 'events')).toHaveProperty('appear');
+    });
+
+    describe('when element is an image', () => {
+        it('should set src to default placeholder when src is falsy', () => {
+            const $img = $('<img>');
+            $img.lazyload();
+
+            expect($img.attr('src')).toBe(defaultOptions.placeholder);
+        });
+
+        it('should not set src to default placeholder when src is set', () => {
+            const $img = $('<img src="test.png">');
+            $img.lazyload();
+
+            expect($img.attr('src')).toBe('test.png');
+        });
+    });
+});
+
+describe('LazyLoad object', () => {
+    const Constructor = $.fn.lazyload.Constructor.prototype;
+
+    it('should add lazyload().Constructor object to $.fn.lazyload()', () => {
+        expect($.fn.lazyload).toHaveProperty('Constructor');
+        expect(typeof $.fn.lazyload.Constructor).toBe('function');
+    });
+
+    describe('getElementTop()', () => {
+        it('should return element\'s top + threshhold', () => {
+            const offsetTop = 100,
+                threshold = 50,
+                spyOffset = jest.spyOn($.fn, 'offset').mockImplementation(() => {
+                    return { top: offsetTop };
+                });
+
+            const top = Constructor.getElementTop(null),
+                topThreshold = Constructor.getElementTop(null, threshold);
+
+            expect(top).toBe(offsetTop);
+            expect(topThreshold).toBe(offsetTop - threshold);
+
+            spyOffset.mockRestore();
+        });
+    });
+
+    describe('getWindowHeight()', () => {
+
+        let mockWindow;
+
+        beforeEach(() => {
+          mockWindow = Object.assign({}, window);
+        });
+
+        it('should return innerHeight when innerHeight is set', () => {
+            mockWindow.innerHeight = 420;
+            const container = Constructor.getWindowHeight(mockWindow);
+
+            expect(container).toEqual(mockWindow.innerHeight);
+        });
+
+        it('should return $.fn.height() when innerHeight is not set', () => {
+            const height = 420,
+                heightSpy = jest.spyOn($.fn, 'height').mockImplementation(
+                    () => height
+                );
+
+            delete mockWindow.innerHeight;
+            const container = Constructor.getWindowHeight(mockWindow);
+
+            expect(container).toBe(height);
+
+            heightSpy.mockRestore();
+        });
+    });
+
+    describe('getFoldBottom()', () => {
+        it('should return fold bottom when container is window', () => {
+            const scrollTop = 25,
+                spyScrollTop = jest.spyOn($.fn, 'scrollTop').mockImplementation(
+                    () => scrollTop
+                );
+
+            const foldBottom = Constructor.getFoldBottom(window);
+
+            expect(foldBottom).toBe(window.innerHeight + scrollTop);
+
+            spyScrollTop.mockRestore();
+        });
+
+        it('should return fold bottom when container is custom', () => {
+
+            // console.log($.fn.scrollTop());
+
+            const offsetTop = 100,
+                height = 50,
+                spyOffset = jest.spyOn($.fn, 'offset').mockImplementation(
+                    () => {
+                        return { top: offsetTop };
+                    }
+                ),
+                spyHeight = jest.spyOn($.fn, 'height').mockImplementation(
+                    () => height
+                );
+
+            const foldBottom = Constructor.getFoldBottom(null);
+
+            expect(foldBottom).toBe(offsetTop + height);
+
+            spyOffset.mockRestore();
+            spyHeight.mockRestore();
+        });
+    });
+
+    describe('getContainer()', () => {
+        it('should return window when settings.container is falsy', () => {
+            const container = Constructor.getContainer();
+            expect(container).toBe(window);
+        });
+        it('should return container when settings.container is set', () => {
+            const container = Constructor.getContainer('test');
+            expect(container).toBe('test');
+        });
+    });
+});
+describe('positioning functions', () => {
+    describe('$.belowthefold()', () => {
+        const threshold = 50;
+
+        describe('when container is undefined', () => {
+            describe('when innerHeight is set', () => {
+                it('should return true when below the fold', () => {
+                    const offsetTop = 150,
+                        spyOffset = jest.spyOn($.fn, 'offset').mockImplementation(
+                            () => {
+                                return { top: offsetTop };
+                            }
+                        ),
+                        result = $.belowthefold(null, { threshold });
+
+                    expect(result).toBe(true);
+                    spyOffset.mockRestore();
+                });
+
+                it('should return false when not below the fold', () => {
+                    const offsetTop = 100,
+                        spyOffset = jest.spyOn($.fn, 'offset').mockImplementation(
+                            () => {
+                                return { top: offsetTop };
+                            }
+                        ),
+                        result = $.belowthefold(null, { threshold });
+
+                    expect(result).toBe(false);
+                    spyOffset.mockRestore();
+                });
+            });
+
+            describe('when innerHeight is not set', () => {
+                let spyOffset,
+                    spyHeight;
+
+                beforeEach(() => {
+                    // mocks
+                    const offsetTop = 150,
+                        height = mocks.windowHeight;
+
+                    spyOffset = jest.spyOn($.fn, 'offset').mockImplementation(
+                        () => {
+                            return { top: offsetTop };
+                        }
+                    );
+                    spyHeight = jest.spyOn($.fn, 'height').mockImplementation(
+                        () => height
+                    );
+
+                    // simulate missing property
+                    delete global.window.innerHeight;
+                });
+
+                afterEach(() => {
+                    // clean up mocks
+                    spyOffset.mockRestore();
+                    spyHeight.mockRestore();
+
+                    // return property
+                    global.window.innerHeight = mocks.windowHeight;
+                });
+
+                it('should return true when below the fold', () => {
+                    const result = $.belowthefold(null, { threshold });
+                    expect(result).toBe(true);
+                });
+
+                it('should return false when not below the fold', () => {
+                    const spyScrolltop = jest.spyOn($.fn, 'scrollTop').mockImplementation(
+                            () => 100
+                        ),
+                        result = $.belowthefold(null, { threshold });
+                    expect(result).toBe(false);
+                    spyScrolltop.mockRestore();
+                });
+            });
+        });
+
+        describe('when container is window', () => {
+            describe('when innerHeight is set', () => {
+                it('should return true when below the fold', () => {
+                    const offsetTop = 150,
+                        spyOffset = jest.spyOn($.fn, 'offset').mockImplementation(
+                            () => {
+                                return { top: offsetTop };
+                            }
+                        ),
+                        result = $.belowthefold(null, {
+                            threshold,
+                            container: window
+                        });
+
+                    expect(result).toBe(true);
+                    spyOffset.mockRestore();
+                });
+
+                it('should return false when not below the fold', () => {
+                    const offsetTop = 100,
+                        spyOffset = jest.spyOn($.fn, 'offset').mockImplementation(
+                            () => {
+                                return { top: offsetTop };
+                            }
+                        ),
+                        result = $.belowthefold(null, {
+                            threshold,
+                            container: window
+                        });
+
+                    expect(result).toBe(false);
+                    spyOffset.mockRestore();
+                });
+            });
+
+            describe('when innerHeight is not set', () => {
+
+                    let spyOffset,
+                        spyHeight;
+
+                    beforeAll(() => {
+                        // mocks
+                        const offsetTop = 150,
+                            height = mocks.windowHeight;
+
+                        spyOffset = jest.spyOn($.fn, 'offset').mockImplementation(
+                            () => {
+                                return { top: offsetTop };
+                            }
+                        );
+                        spyHeight = jest.spyOn($.fn, 'height').mockImplementation(
+                            () => height
+                        );
+
+                        // simulate missing property
+                        delete window.innerHeight;
+                        delete global.window.innerHeight;
+                    });
+
+                    afterAll(() => {
+                        // clean up mocks
+                        spyOffset.mockRestore();
+                        spyHeight.mockRestore();
+
+                        // return property
+                        window.innerHeight = mocks.windowInnerHeight;
+                    });
+
+                    it('should return true when below the fold', () => {
+                        const result = $.belowthefold(null, { threshold });
+                        expect(result).toBe(true);
+
+                    });
+
+                    it('should return false when not below the fold', () => {
+                        const spyScrolltop = jest.spyOn($.fn, 'scrollTop').mockImplementation(
+                                () => 100
+                            ),
+                            result = $.belowthefold(null, { threshold });
+                        expect(result).toBe(false);
+                        spyScrolltop.mockRestore();
+                    });
+                });
+        });
+
+        describe('when container is custom', () => {
+            it('should return true when below the fold', () => {
+                const offsetTop = 100,
+                    height = 50,
+                    spyOffset = jest.spyOn($.fn, 'offset').mockImplementationOnce(
+                        () => {
+                            return { top: offsetTop + 50 };
+                        }
+                    ).mockImplementation(
+                        () => {
+                            return { top: offsetTop - 50 };
+                        }
+                    ),
+                    spyHeight = jest.spyOn($.fn, 'height').mockImplementation(
+                        () => height
+                    ),
+                    result = $.belowthefold(null, {
+                        container: 'custom',
+                        threshold
+                    });
+
+                expect(result).toBe(true);
+                spyOffset.mockRestore();
+                spyHeight.mockRestore();
+            });
+
+            it('should return false when not below the fold', () => {
+                const offsetTop = 100,
+                    height = 50,
+                    spyOffset = jest.spyOn($.fn, 'offset').mockImplementationOnce(
+                        () => {
+                            return { top: offsetTop - 50 };
+                        }
+                    ).mockImplementation(
+                        () => {
+                            return { top: offsetTop + 50 };
+                        }
+                    ),
+                    spyHeight = jest.spyOn($.fn, 'height').mockImplementation(
+                        () => height
+                    ),
+                    result = $.belowthefold(null, { threshold });
+
+                expect(result).toBe(false);
+                spyOffset.mockRestore();
+            });
+        });
+    });
+});
