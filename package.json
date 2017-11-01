@@ -10,14 +10,21 @@
   },
   "author": "Mika Tuupola <tuupola@appelsiini.net>",
   "scripts": {
-    "test": "grunt test"
+    "test": "grunt test",
+    "jest": "jest --coverage"
   },
   "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "babel-jest": "^21.2.0",
+    "babel-plugin-conditional-compile": "0.0.5",
     "grunt": "~0.4.1",
+    "grunt-contrib-jasmine": "~0.5.2",
     "grunt-contrib-jshint": "~0.6.4",
     "grunt-contrib-uglify": "~0.2.4",
-    "grunt-contrib-jasmine": "~0.5.2",
-    "grunt-contrib-watch": "~0.5.3"
+    "grunt-contrib-watch": "~0.5.3",
+    "jest": "^21.2.1",
+    "jquery": "^3.2.1",
+    "regenerator-runtime": "^0.11.0"
   },
   "dependencies": {
     "grunt-contrib-connect": "^0.8.0"
@@ -29,9 +36,25 @@
   "homepage": "http://www.appelsiini.net/projects/lazyload",
   "main": "jquery.lazyload.js",
   "files": [
-      "jquery.lazyload.js",
-      "jquery.scrollstop.js"
+    "jquery.lazyload.js",
+    "jquery.scrollstop.js"
   ],
+  "babel": {
+    "env": {
+      "test": {
+        "plugins": [
+          [
+            "conditional-compile",
+            {
+              "define": {
+                "TESTING": "true"
+              }
+            }
+          ]
+        ]
+      }
+    }
+  },
   "keywords": [
     "jquery-plugin",
     "ecosystem:jquery"
