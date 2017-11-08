@@ -189,7 +189,7 @@
     };
 
     /**
-	 * Return element's top + threshold
+	 * Return element's offset top + threshold
 	 * @protected
 	 * @param {object} element - The element
 	 * @param {number} threshold - The optional threshold setting
@@ -200,7 +200,7 @@
     };
 
     /**
-	 * Return element's left + threshold
+	 * Return element's offset left + threshold
 	 * @protected
 	 * @param {object} element - The element
 	 * @param {number} threshold - The optional threshold setting

@@ -7,11 +7,13 @@ global.jQuery = global.$ = jQuery;
 const mocks = {
     windowHeight: 100,
     windowWidth: 100
-}
-window = Object.assign(window, {
+};
+
+global.window = Object.assign(window, {
     innerHeight: mocks.windowHeight,
     innerWidth: mocks.windowWidth
 });
+
 
 require('../jquery.lazyload');
 
@@ -250,7 +252,7 @@ describe('positioning functions', () => {
     });
 
     describe('$.rightoffold()', () => {
-        it('should return true when below the fold', () => {
+        it('should return true when right of the fold', () => {
             const spyGetElementLeft = jest.spyOn(Constructor, 'getElementLeft')
                 .mockImplementation(() => 100),
                 getContainer = jest.spyOn(Constructor, 'getFoldRight')
@@ -263,7 +265,7 @@ describe('positioning functions', () => {
             getContainer.mockRestore();
         });
 
-        it('should return false when not below the fold', () => {
+        it('should return false when not right of the fold', () => {
             const spyGetElementLeft = jest.spyOn(Constructor, 'getElementLeft')
                 .mockImplementation(() => 50),
                 getContainer = jest.spyOn(Constructor, 'getFoldRight')
