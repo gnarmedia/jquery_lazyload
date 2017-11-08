@@ -8,8 +8,6 @@ node_js:
 install:
   - npm install
 
-before_script:
-  - npm install grunt-cli -g
-
 script:
-  - grunt test
+  - npm run jest
+  

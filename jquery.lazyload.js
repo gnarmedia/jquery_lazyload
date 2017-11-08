@@ -16,6 +16,12 @@
 (function($, window, document, undefined) {
     var $window = $(window);
 
+    /**
+	 * LazyLoad object constructor function
+	 * @public
+	 */
+    function LazyLoad () {}
+
     $.fn.lazyload = function(options) {
         var elements = this;
         var $container;
@@ -182,19 +188,63 @@
         return this;
     };
 
+    /**
+	 * Calculate element's top + threshold
+	 * @protected
+	 * @param {object} element - The element
+	 * @param {number} threshold - The optional threshold setting
+     * @returns {number} - The top
+	 */
+    LazyLoad.prototype.getElementTop = function(element, threshold) {
+        return $(element).offset().top - (threshold || 0);
+    };
+
+    /**
+     * Return window's height by innerHeight or $.fn.height()
+     * @protected
+     * @param {any} container - The container option
+     * @returns {any} - The container
+     */
+    LazyLoad.prototype.getWindowHeight = function(window) {
+        return window.innerHeight || $(window).height();
+    }
+
+    /**
+    * Return fold bottom
+    * @protected
+    * @param {any} container - The container option
+    * @returns {any} - The fold bottom
+    */
+    LazyLoad.prototype.getFoldBottom = function(container) {
+       if (container === window) {
+           return LazyLoad.prototype.getWindowHeight(container)
+               + $(container).scrollTop();
+       }
+       return $(container).offset().top + $(container).height();
+    }
+
+    /**
+     * Return element's container
+     * @protected
+     * @param {any} container - The container option
+     * @returns {any} - The container
+     */
+    LazyLoad.prototype.getContainer = function(container) {
+        return container || window;
+    };
+
     /* Convenience methods in jQuery namespace.           */
     /* Use as  $.belowthefold(element, {threshold : 100, container : window}) */
 
     $.belowthefold = function(element, settings) {
-        var fold;
+        var elementTop = LazyLoad.prototype.getElementTop(
+                element,
+                settings.threshold
+            ),
+            container = LazyLoad.prototype.getContainer(settings.container),
+            fold = LazyLoad.prototype.getFoldBottom(container);
 
-        if (settings.container === undefined || settings.container === window) {
-            fold = (window.innerHeight ? window.innerHeight : $window.height()) + $window.scrollTop();
-        } else {
-            fold = $(settings.container).offset().top + $(settings.container).height();
-        }
-
-        return fold <= $(element).offset().top - settings.threshold;
+        return fold <= elementTop;
     };
 
     $.rightoffold = function(element, settings) {
@@ -253,5 +303,11 @@
         "right-of-fold"  : function(a) { return $.rightoffold(a, {threshold : 0}); },
         "left-of-fold"   : function(a) { return !$.rightoffold(a, {threshold : 0}); }
     });
+
+    /**
+     * The public interface of LazyLoad object
+     * @public
+     */
+    $.fn.lazyload.Constructor = LazyLoad;
 
 })(jQuery, window, document);
