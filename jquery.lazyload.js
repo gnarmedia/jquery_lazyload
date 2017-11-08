@@ -189,7 +189,7 @@
     };
 
     /**
-	 * Calculate element's top + threshold
+	 * Return element's offset top + threshold
 	 * @protected
 	 * @param {object} element - The element
 	 * @param {number} threshold - The optional threshold setting
@@ -200,13 +200,34 @@
     };
 
     /**
+	 * Return element's offset left + threshold
+	 * @protected
+	 * @param {object} element - The element
+	 * @param {number} threshold - The optional threshold setting
+     * @returns {number} - The left
+	 */
+    LazyLoad.prototype.getElementLeft = function(element, threshold) {
+        return $(element).offset().left - (threshold || 0);
+    };
+
+    /**
      * Return window's height by innerHeight or $.fn.height()
      * @protected
-     * @param {any} container - The container option
-     * @returns {any} - The container
+     * @param {any} container - The window
+     * @returns {any} - The window height
      */
     LazyLoad.prototype.getWindowHeight = function(window) {
         return window.innerHeight || $(window).height();
+    }
+
+    /**
+     * Return window's width by innerWidth or $.fn.width()
+     * @protected
+     * @param {any} container - The window option
+     * @returns {any} - The window width
+     */
+    LazyLoad.prototype.getWindowWidth = function(window) {
+        return window.innerWidth || $(window).width();
     }
 
     /**
@@ -221,6 +242,20 @@
                + $(container).scrollTop();
        }
        return $(container).offset().top + $(container).height();
+    }
+
+    /**
+    * Return fold right
+    * @protected
+    * @param {any} container - The container option
+    * @returns {any} - The fold right
+    */
+    LazyLoad.prototype.getFoldRight = function(container) {
+       if (container === window) {
+           return LazyLoad.prototype.getWindowWidth(container)
+               + $(container).scrollLeft();
+       }
+       return $(container).offset().left + $(container).height();
     }
 
     /**
@@ -248,15 +283,14 @@
     };
 
     $.rightoffold = function(element, settings) {
-        var fold;
+        var elementLeft = LazyLoad.prototype.getElementLeft(
+                element,
+                settings.threshold
+            ),
+            container = LazyLoad.prototype.getContainer(settings.container),
+            fold = LazyLoad.prototype.getFoldRight(container);
 
-        if (settings.container === undefined || settings.container === window) {
-            fold = $window.width() + $window.scrollLeft();
-        } else {
-            fold = $(settings.container).offset().left + $(settings.container).width();
-        }
-
-        return fold <= $(element).offset().left - settings.threshold;
+        return fold <= elementLeft;
     };
 
     $.abovethetop = function(element, settings) {
