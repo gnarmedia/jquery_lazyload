@@ -18,7 +18,6 @@ const defaultOptions = {
 
 describe('general', () => {
     it('should add lazyload() function to global {jQuery} object', () => {
-        expect($.fn).toHaveProperty('lazyload');
         expect(typeof $.fn.lazyload).toBe('function');
     });
 });
@@ -52,7 +51,6 @@ describe('LazyLoad object', () => {
     const Constructor = $.fn.lazyload.Constructor.prototype;
 
     it('should add lazyload().Constructor object to $.fn.lazyload()', () => {
-        expect($.fn.lazyload).toHaveProperty('Constructor');
         expect(typeof $.fn.lazyload.Constructor).toBe('function');
     });
 
@@ -75,27 +73,20 @@ describe('LazyLoad object', () => {
     });
 
     describe('getWindowHeight()', () => {
-
-        let mockWindow;
-
-        beforeEach(() => {
-          mockWindow = Object.assign({}, window);
-        });
-
         it('should return innerHeight when innerHeight is set', () => {
-            mockWindow.innerHeight = 420;
-            const container = Constructor.getWindowHeight(mockWindow);
+            const mockWindow = { innerHeight: 420 },
+                container = Constructor.getWindowHeight(mockWindow);
 
             expect(container).toEqual(mockWindow.innerHeight);
         });
 
         it('should return $.fn.height() when innerHeight is not set', () => {
-            const height = 420,
+            const mockWindow = {},
+                height = 420,
                 heightSpy = jest.spyOn($.fn, 'height').mockImplementation(
                     () => height
                 );
 
-            delete mockWindow.innerHeight;
             const container = Constructor.getWindowHeight(mockWindow);
 
             expect(container).toBe(height);
@@ -109,9 +100,8 @@ describe('LazyLoad object', () => {
             const scrollTop = 25,
                 spyScrollTop = jest.spyOn($.fn, 'scrollTop').mockImplementation(
                     () => scrollTop
-                );
-
-            const foldBottom = Constructor.getFoldBottom(window);
+                ),
+                foldBottom = Constructor.getFoldBottom(window);
 
             expect(foldBottom).toBe(window.innerHeight + scrollTop);
 
@@ -119,9 +109,6 @@ describe('LazyLoad object', () => {
         });
 
         it('should return fold bottom when container is custom', () => {
-
-            // console.log($.fn.scrollTop());
-
             const offsetTop = 100,
                 height = 50,
                 spyOffset = jest.spyOn($.fn, 'offset').mockImplementation(
@@ -131,9 +118,8 @@ describe('LazyLoad object', () => {
                 ),
                 spyHeight = jest.spyOn($.fn, 'height').mockImplementation(
                     () => height
-                );
-
-            const foldBottom = Constructor.getFoldBottom(null);
+                ),
+                foldBottom = Constructor.getFoldBottom(null);
 
             expect(foldBottom).toBe(offsetTop + height);
 
