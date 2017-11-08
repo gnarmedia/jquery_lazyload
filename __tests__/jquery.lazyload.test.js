@@ -152,16 +152,22 @@ describe('positioning functions', () => {
                 result = $.belowthefold(null, {threshold: 0});
 
             expect(result).toBe(true);
+
+            spyGetElementTop.mockRestore();
+            getContainer.mockRestore();
         });
 
-        it('should return false when below the fold', () => {
+        it('should return false when not below the fold', () => {
             const spyGetElementTop = jest.spyOn(Constructor, 'getElementTop')
                 .mockImplementation(() => 50),
                 getContainer = jest.spyOn(Constructor, 'getFoldBottom')
-                    .mockImplementation(() => 10),
+                    .mockImplementation(() => 100),
                 result = $.belowthefold(null, {threshold: 0});
 
-            expect(result).toBe(true);
+            expect(result).toBe(false);
+
+            spyGetElementTop.mockRestore();
+            getContainer.mockRestore();
         });
     });
 });
