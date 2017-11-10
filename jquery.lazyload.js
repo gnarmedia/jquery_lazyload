@@ -199,6 +199,19 @@
     };
 
     /**
+     * Returns the element's top + height accounting for the threshold
+     * @protected
+     * @param  {object} element   The element
+     * @param  {number} threshold The optional threshold settings
+     * @return {number}           The element's top
+     */
+    LazyLoad.prototype.getElementBottom = function(element, threshold) {
+        var elementTop = LazyLoad.prototype.getElementTop(element);
+        var elementHeight = LazyLoad.prototype.getElementHeight(element);
+        return elementTop + elementHeight + (threshold || 0);
+    }
+
+    /**
 	 * Returns the element's left accounting for the threshold
 	 * @protected
 	 * @param   {object} element   The element
@@ -210,34 +223,36 @@
     };
 
     /**
-     * Returns element's top + height accounting for the threshold
+     * Returns the element's left + width accounting for the threshold
      * @protected
      * @param  {object} element   The element
      * @param  {number} threshold The optional threshold settings
-     * @return {number}           The element's top
+     * @return {number}           The element's left
      */
-    LazyLoad.prototype.getElementBottom = function(element, threshold) {
-        return $(element).offset().top + (threshold || 0)  + $(element).height();
+    LazyLoad.prototype.getElementRight = function(element, threshold) {
+        var elementLeft = LazyLoad.prototype.getElementLeft(element);
+        var elementWidth = LazyLoad.prototype.getElementWidth(element);
+        return elementLeft + elementWidth + (threshold || 0);
     }
 
     /**
-     * Returns the window's height
+     * Returns the element's height
      * @protected
-     * @param  {object} window The window
-     * @return {number}        The window's height
+     * @param  {object} element The element
+     * @return {number}        The element's height
      */
-    LazyLoad.prototype.getWindowHeight = function(window) {
-        return window.innerHeight || $(window).height();
+    LazyLoad.prototype.getElementHeight = function(element) {
+        return element.innerHeight || $(element).height();
     }
 
     /**
-     * Returns the window's width
+     * Returns the element's width
      * @protected
-     * @param  {object} window The window
-     * @return {number}        The window's width
+     * @param  {object} element The element
+     * @return {number}        The element's width
      */
-    LazyLoad.prototype.getWindowWidth = function(window) {
-        return window.innerWidth || $(window).width();
+    LazyLoad.prototype.getElementWidth = function(element) {
+        return element.innerWidth || $(element).width();
     }
 
     /**
@@ -247,10 +262,9 @@
     * @returns {number}           The fold's top
     */
     LazyLoad.prototype.getFoldTop = function(container) {
-       if (container === window) {
-           return $(container).scrollTop();
-       }
-       return $(container).offset().top;
+        return (container === window
+            ? $(container).scrollTop()
+            : $(container).offset().top);
     }
 
     /**
@@ -260,27 +274,34 @@
     * @returns {number}           The fold's bottom
     */
     LazyLoad.prototype.getFoldBottom = function(container) {
-        var foldTop = LazyLoad.prototype.getFoldTop(container);
-        if (container === window) {
-            return foldTop + LazyLoad.prototype.getWindowHeight(container);
-        }
-        return foldTop + $(container).height();
+        var foldTop = LazyLoad.prototype.getFoldTop(container),
+            containerHeight = LazyLoad.prototype.getElementHeight(container);
+        return foldTop + containerHeight;
+    }
+
+    /**
+    * Returns the fold's left
+    * @protected
+    * @param   {object} container The container
+    * @returns {number}           The fold's left
+    */
+    LazyLoad.prototype.getFoldLeft = function(container) {
+        return (container === window
+            ? $(container).scrollLeft()
+            : $(container).offset().left);
     }
 
     /**
     * Returns the fold's right
     * @protected
-    * @param   {object} container The container option
+    * @param   {object} container The container
     * @returns {number}           The fold's right
     */
     LazyLoad.prototype.getFoldRight = function(container) {
-       if (container === window) {
-           return LazyLoad.prototype.getWindowWidth(container)
-               + $(container).scrollLeft();
-       }
-       return $(container).offset().left + $(container).height();
+        var foldLeft = LazyLoad.prototype.getFoldLeft(container),
+            containerWidth = LazyLoad.prototype.getElementWidth(container);
+        return foldLeft + containerWidth;
     }
-
 
     /**
      * Returns the element's container
@@ -329,15 +350,14 @@
     };
 
     $.leftofbegin = function(element, settings) {
-        var fold;
+        var elementRight = LazyLoad.prototype.getElementRight(
+                element,
+                settings.threshold
+            ),
+            container = LazyLoad.prototype.getContainer(settings.container),
+            fold = LazyLoad.prototype.getFoldLeft(container);
 
-        if (settings.container === undefined || settings.container === window) {
-            fold = $window.scrollLeft();
-        } else {
-            fold = $(settings.container).offset().left;
-        }
-
-        return fold >= $(element).offset().left + settings.threshold + $(element).width();
+        return fold <= elementRight;
     };
 
     $.inviewport = function(element, settings) {

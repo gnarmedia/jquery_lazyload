@@ -5,15 +5,14 @@ global.jQuery = global.$ = jQuery;
 
 /* Mock implementations */
 const mocks = {
-    windowHeight: 100,
-    windowWidth: 100
+    height: 100,
+    width: 100
 };
 
 global.window = Object.assign(window, {
     innerHeight: mocks.windowHeight,
     innerWidth: mocks.windowWidth
 });
-
 
 require('../jquery.lazyload');
 
@@ -66,15 +65,36 @@ describe('LazyLoad object', () => {
                 threshold = 50,
                 spyOffset = jest.spyOn($.fn, 'offset').mockImplementation(() => {
                     return { top: offsetTop };
-                });
-
-            const top = Constructor.getElementTop(),
+                }),
+                top = Constructor.getElementTop(),
                 topThreshold = Constructor.getElementTop(null, threshold);
+
+            spyOffset.mockRestore();
 
             expect(top).toBe(offsetTop);
             expect(topThreshold).toBe(offsetTop - threshold);
+        });
+    });
 
-            spyOffset.mockRestore();
+    describe('getElementBottom()', () => {
+        it('should return element\'s bottom + threshold', () => {
+            const top = 100,
+                height = 50,
+                threshold = 50,
+                mockGetElementTop = jest.spyOn(Constructor, 'getElementTop').mockImplementation(
+                    () => top
+                ),
+                mockGetElementHeight = jest.spyOn(Constructor, 'getElementHeight').mockImplementation(
+                    () => height
+                ),
+                bottom = Constructor.getElementBottom({}),
+                bottomThreshold = Constructor.getElementBottom({}, threshold);
+
+            mockGetElementTop.mockRestore();
+            mockGetElementHeight.mockRestore();
+
+            expect(bottom).toBe(top + height);
+            expect(bottomThreshold).toBe(top + height + threshold);
         });
     });
 
@@ -84,152 +104,120 @@ describe('LazyLoad object', () => {
                 threshold = 50,
                 spyOffset = jest.spyOn($.fn, 'offset').mockImplementation(() => {
                     return { left: offsetLeft };
-                });
-
-            const left = Constructor.getElementLeft(),
+                }),
+                left = Constructor.getElementLeft(),
                 leftThreshold = Constructor.getElementLeft(null, threshold);
+
+            spyOffset.mockRestore();
 
             expect(left).toBe(offsetLeft);
             expect(leftThreshold).toBe(offsetLeft - threshold);
-
-            spyOffset.mockRestore();
         });
     });
 
-    describe('getElementBottom()', () => {
-        it('should return element\'s bottom + threshold', () => {
-            const top = 100,
+    describe('getElementRight()', () => {
+        it('should return element\'s right + threshhold', () => {
+            const left = 100,
+                width = 50,
                 threshold = 50,
-                height = 50,
-                mockTop = jest.spyOn($.fn, 'offset').mockImplementation(() => {
-                    return { top }
-                }),
-                mockHeight = jest.spyOn($.fn, 'height').mockImplementation(() => {
-                    return height;
-                });
+                mockGetElementLeft = jest.spyOn(Constructor, 'getElementLeft').mockImplementation(
+                    () => left
+                ),
+                mockGetElementWidth = jest.spyOn(Constructor, 'getElementWidth').mockImplementation(
+                    () => width
+                ),
+                right = Constructor.getElementRight({}),
+                leftThreshold = Constructor.getElementRight({}, threshold);
 
-            const bottom = Constructor.getElementBottom(),
-                bottomThreshold = Constructor.getElementBottom(null, threshold);
+            mockGetElementLeft.mockRestore();
+            mockGetElementWidth.mockRestore();
 
-            expect(bottom).toBe(top + height);
-            expect(bottomThreshold).toBe(top + height + threshold);
-
-            mockTop.mockRestore();
-            mockHeight.mockRestore();
+            expect(right).toBe(left + width);
+            expect(leftThreshold).toBe(left + width + threshold);
         });
     });
 
-    describe('getWindowHeight()', () => {
+    describe('getElementHeight()', () => {
         it('should return innerHeight when innerHeight is set', () => {
-            const mockWindow = { innerHeight: 420 },
-                container = Constructor.getWindowHeight(mockWindow);
+            const height = 420,
+                mockElement = { innerHeight: height },
+                elementHeight = Constructor.getElementHeight(mockElement);
 
-            expect(container).toEqual(mockWindow.innerHeight);
+            expect(elementHeight).toEqual(height);
         });
 
         it('should return $.fn.height() when innerHeight is not set', () => {
-            const mockWindow = {},
-                height = 420,
-                heightSpy = jest.spyOn($.fn, 'height').mockImplementation(
-                    () => height
-                );
+            const height = 420,
+                mockElement = {},
+                mockHeight = jest.spyOn($.fn, 'height').mockImplementation(
+                    () => 420
+                ),
+                elementHeight = Constructor.getElementHeight(mockElement);
 
-            const container = Constructor.getWindowHeight(mockWindow);
+            mockHeight.mockRestore();
 
-            expect(container).toBe(height);
-
-            heightSpy.mockRestore();
+            expect(elementHeight).toBe(height);
         });
     });
 
-    describe('getWindowWidth()', () => {
+    describe('getElementWidth()', () => {
         it('should return innerWidth when innerWidth is set', () => {
-            const mockWindow = { innerWidth: 420 },
-                container = Constructor.getWindowWidth(mockWindow);
+            const width = 420,
+                mockWindow = { innerWidth: width },
+                elementWidth = Constructor.getElementWidth(mockWindow);
 
-            expect(container).toEqual(mockWindow.innerWidth);
+            expect(elementWidth).toEqual(width);
         });
 
         it('should return $.fn.width() when innerWidth is not set', () => {
-            const mockWindow = {},
-                width = 420,
-                widthSpy = jest.spyOn($.fn, 'width').mockImplementation(
+            const width = 420,
+                mockWindow = {},
+                mockWidth = jest.spyOn($.fn, 'width').mockImplementation(
                     () => width
-                );
+                ),
+                elementWidth = Constructor.getElementWidth(mockWindow);
 
-            const container = Constructor.getWindowWidth(mockWindow);
+            mockWidth.mockRestore();
 
-            expect(container).toBe(width);
-
-            widthSpy.mockRestore();
+            expect(elementWidth).toBe(width);
         });
     });
 
     describe('getFoldBottom()', () => {
-        it('should return fold bottom when container is window', () => {
-            const foldTop = 25,
-                spyGetFoldTop = jest.spyOn(Constructor, 'getFoldTop').mockImplementation(
+        it('should return fold bottom', () => {
+            const elementHeight = 100,
+                foldTop = 25,
+                mockGetFoldTop = jest.spyOn(Constructor, 'getFoldTop').mockImplementation(
                     () => foldTop
                 ),
-                spyGetWindowHeight = jest.spyOn(Constructor, 'getWindowHeight').mockImplementation(
-                    () => mocks.windowHeight
+                mockGetElementHeight = jest.spyOn(Constructor, 'getElementHeight').mockImplementation(
+                    () => elementHeight
                 ),
-                foldBottom = Constructor.getFoldBottom(window);
+                foldBottom = Constructor.getFoldBottom(null);
 
-            expect(foldBottom).toBe(foldTop + mocks.windowHeight);
+            mockGetFoldTop.mockRestore();
+            mockGetElementHeight.mockRestore();
 
-            spyGetFoldTop.mockRestore();
-            spyGetWindowHeight.mockRestore();
-        });
-
-        it('should return fold bottom when container is custom', () => {
-            const foldTop = 100,
-                height = 50,
-                spyGetFoldTop = jest.spyOn(Constructor, 'getFoldTop').mockImplementation(
-                    () => foldTop
-                ),
-                spyHeight = jest.spyOn($.fn, 'height').mockImplementation(
-                    () => height
-                ),
-                foldBottom = Constructor.getFoldBottom();
-
-            expect(foldBottom).toBe(foldTop + height);
-
-            spyGetFoldTop.mockRestore();
-            spyHeight.mockRestore();
+            expect(foldBottom).toBe(foldTop + elementHeight);
         });
     });
 
     describe('getFoldRight()', () => {
-        it('should return fold bottom when container is window', () => {
-            const scrollLeft = 25,
-                spyScrollLeft = jest.spyOn($.fn, 'scrollLeft').mockImplementation(
-                    () => scrollLeft
+        it('should return fold right', () => {
+            const elementWidth = 100,
+                foldLeft = 25,
+                mockGetFoldLeft = jest.spyOn(Constructor, 'getFoldLeft').mockImplementation(
+                    () => foldLeft
                 ),
-                foldRight = Constructor.getFoldRight(window);
-
-            expect(foldRight).toBe(window.innerHeight + scrollLeft);
-
-            spyScrollLeft.mockRestore();
-        });
-
-        it('should return fold bottom when container is custom', () => {
-            const offsetTop = 100,
-                height = 50,
-                spyOffset = jest.spyOn($.fn, 'offset').mockImplementation(
-                    () => {
-                        return { top: offsetTop };
-                    }
+                mockGetElementWidth = jest.spyOn(Constructor, 'getElementWidth').mockImplementation(
+                    () => elementWidth
                 ),
-                spyHeight = jest.spyOn($.fn, 'height').mockImplementation(
-                    () => height
-                ),
-                foldBottom = Constructor.getFoldBottom();
+                foldRight = Constructor.getFoldRight(null);
 
-            expect(foldBottom).toBe(offsetTop + height);
+            mockGetFoldLeft.mockRestore();
+            mockGetElementWidth.mockRestore();
 
-            spyOffset.mockRestore();
-            spyHeight.mockRestore();
+            expect(foldRight).toBe(foldLeft + elementWidth);
         });
     });
 
@@ -241,9 +229,9 @@ describe('LazyLoad object', () => {
                 ),
                 foldTop = Constructor.getFoldTop(window);
 
-            expect(foldTop).toBe(scrollTop);
-
             mockScrollTop.mockRestore();
+
+            expect(foldTop).toBe(scrollTop);
         });
     });
 
@@ -270,83 +258,115 @@ describe('positioning functions', () => {
                 .mockImplementation(() => elementTop),
                 mockGetFoldBottom = jest.spyOn(Constructor, 'getFoldBottom')
                     .mockImplementation(() => foldBottom),
-                result = $.belowthefold(null, {threshold: 0});
-
-            expect(result).toBe(true);
+                $belowTheFold = $.belowthefold(null, {threshold: 0});
 
             mockGetElementTop.mockRestore();
             mockGetFoldBottom.mockRestore();
+
+            expect($belowTheFold).toBe(true);
         });
 
         it('should return false when not below the fold', () => {
             const elementTop = 50,
                 foldBottom = 100,
                 mockGetElementTop = jest.spyOn(Constructor, 'getElementTop')
-                .mockImplementation(() => 50),
+                .mockImplementation(() => elementTop),
                 mockGetFoldBottom = jest.spyOn(Constructor, 'getFoldBottom')
-                    .mockImplementation(() => 100),
-                result = $.belowthefold(null, {threshold: 0});
-
-            expect(result).toBe(false);
+                    .mockImplementation(() => foldBottom),
+                $belowTheFold = $.belowthefold(null, {threshold: 0});
 
             mockGetElementTop.mockRestore();
             mockGetFoldBottom.mockRestore();
+
+            expect($belowTheFold).toBe(false);
         });
     });
 
     describe('$.rightoffold()', () => {
         it('should return true when right of the fold', () => {
-            const spyGetElementLeft = jest.spyOn(Constructor, 'getElementLeft')
-                .mockImplementation(() => 100),
-                getContainer = jest.spyOn(Constructor, 'getFoldRight')
-                    .mockImplementation(() => 50),
-                result = $.rightoffold(null, {threshold: 0});
+            const elementLeft = 100,
+                foldRight = 50,
+                mockGetElementLeft = jest.spyOn(Constructor, 'getElementLeft')
+                .mockImplementation(() => elementLeft),
+                mockGetFoldRight = jest.spyOn(Constructor, 'getFoldRight')
+                    .mockImplementation(() => foldRight),
+                $rightOfFold = $.rightoffold(null, {threshold: 0});
 
-            expect(result).toBe(true);
+            mockGetElementLeft.mockRestore();
+            mockGetFoldRight.mockRestore();
 
-            spyGetElementLeft.mockRestore();
-            getContainer.mockRestore();
+            expect($rightOfFold).toBe(true);
         });
 
         it('should return false when not right of the fold', () => {
-            const spyGetElementLeft = jest.spyOn(Constructor, 'getElementLeft')
-                .mockImplementation(() => 50),
-                getContainer = jest.spyOn(Constructor, 'getFoldRight')
-                    .mockImplementation(() => 100),
-                result = $.rightoffold(null, {threshold: 0});
+            const elementLeft = 50,
+                foldRight = 100,
+                mockGetElementLeft = jest.spyOn(Constructor, 'getElementLeft')
+                .mockImplementation(() => elementLeft),
+                mockGetFoldRight = jest.spyOn(Constructor, 'getFoldRight')
+                    .mockImplementation(() => foldRight),
+                $rightOfFold = $.rightoffold(null, {threshold: 0});
 
-            expect(result).toBe(false);
+            mockGetElementLeft.mockRestore();
+            mockGetFoldRight.mockRestore();
 
-            spyGetElementLeft.mockRestore();
-            getContainer.mockRestore();
+            expect($rightOfFold).toBe(false);
         });
     });
 
     describe('$.abovethetop()', () => {
         it('should return true when above the top', () => {
-            const getElementBottom = jest.spyOn(Constructor, 'getElementBottom')
+            const mockGetElementBottom = jest.spyOn(Constructor, 'getElementBottom')
                 .mockImplementation(() => 100),
-                getFoldTop = jest.spyOn(Constructor, 'getFoldTop')
+                mockGetFoldTop = jest.spyOn(Constructor, 'getFoldTop')
                     .mockImplementation(() => 50),
-                abovethetop = $.abovethetop(null, {threshold: 0});
+                $abovethetop = $.abovethetop(null, {threshold: 0});
 
-            expect(abovethetop).toBe(true);
+                mockGetElementBottom.mockRestore();
+                mockGetFoldTop.mockRestore();
 
-            getElementBottom.mockRestore();
-            getFoldTop.mockRestore();
+            expect($abovethetop).toBe(true);
         });
 
         it('should return false when not below the fold', () => {
-            const getElementBottom = jest.spyOn(Constructor, 'getElementBottom')
+            const mockGetElementBottom = jest.spyOn(Constructor, 'getElementBottom')
                 .mockImplementation(() => 50),
-                getFoldTop = jest.spyOn(Constructor, 'getFoldTop')
+                mockGetFoldTop = jest.spyOn(Constructor, 'getFoldTop')
                     .mockImplementation(() => 100),
-                abovethetop = $.abovethetop(null, {threshold: 0});
+                $abovethetop = $.abovethetop(null, {threshold: 0});
 
-            expect(abovethetop).toBe(false);
+            mockGetElementBottom.mockRestore();
+            mockGetFoldTop.mockRestore();
 
-            getElementBottom.mockRestore();
-            getFoldTop.mockRestore();
+            expect($abovethetop).toBe(false);
+        });
+    });
+
+    describe('$.leftobegin()', () => {
+        it('should return true when left of the beginning', () => {
+            const mockGetElementRight = jest.spyOn(Constructor, 'getElementRight')
+                .mockImplementation(() => 100),
+                mockGetFoldLeft = jest.spyOn(Constructor, 'getFoldLeft')
+                    .mockImplementation(() => 50),
+                $leftofbegin = $.leftofbegin(null, {threshold: 0});
+
+            mockGetElementRight.mockRestore();
+            mockGetFoldLeft.mockRestore();
+
+            expect($leftofbegin).toBe(true);
+        });
+
+        it('should return false when not below the fold', () => {
+            const mockGetElementRight = jest.spyOn(Constructor, 'getElementRight')
+                .mockImplementation(() => 50),
+                mockGetFoldLeft = jest.spyOn(Constructor, 'getFoldLeft')
+                    .mockImplementation(() => 100),
+                $leftofbegin = $.leftofbegin(null, {threshold: 0});
+
+            mockGetElementRight.mockRestore();
+            mockGetFoldLeft.mockRestore();
+
+            expect($leftofbegin).toBe(false);
         });
     });
 });
