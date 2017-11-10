@@ -241,17 +241,30 @@
     }
 
     /**
+    * Returns the fold's top
+    * @protected
+    * @param   {object} container The container
+    * @returns {number}           The fold's top
+    */
+    LazyLoad.prototype.getFoldTop = function(container) {
+       if (container === window) {
+           return $(container).scrollTop();
+       }
+       return $(container).offset().top;
+    }
+
+    /**
     * Returns the fold's bottom
     * @protected
     * @param   {object} container The container
     * @returns {number}           The fold's bottom
     */
     LazyLoad.prototype.getFoldBottom = function(container) {
-       if (container === window) {
-           return LazyLoad.prototype.getWindowHeight(container)
-               + $(container).scrollTop();
-       }
-       return $(container).offset().top + $(container).height();
+        var foldTop = LazyLoad.prototype.getFoldTop(container);
+        if (container === window) {
+            return foldTop + LazyLoad.prototype.getWindowHeight(container);
+        }
+        return foldTop + $(container).height();
     }
 
     /**
@@ -268,11 +281,12 @@
        return $(container).offset().left + $(container).height();
     }
 
+
     /**
      * Returns the element's container
      * @protected
      * @param   {object} container The container to identify
-     * @returns {object}           The indeitified container
+     * @returns {object}           The container
      */
     LazyLoad.prototype.getContainer = function(container) {
         return container || window;
@@ -304,15 +318,14 @@
     };
 
     $.abovethetop = function(element, settings) {
-        var fold;
+        var elementBottom = LazyLoad.prototype.getElementBottom(
+                element,
+                settings.threshold
+            ),
+            container = LazyLoad.prototype.getContainer(settings.container),
+            fold = LazyLoad.prototype.getFoldTop(container);
 
-        if (settings.container === undefined || settings.container === window) {
-            fold = $window.scrollTop();
-        } else {
-            fold = $(settings.container).offset().top;
-        }
-
-        return fold >= $(element).offset().top + settings.threshold  + $(element).height();
+        return fold <= elementBottom;
     };
 
     $.leftofbegin = function(element, settings) {
