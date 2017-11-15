@@ -17,54 +17,44 @@
     var $window = $(window);
 
     /**
-	 * LazyLoad object constructor function
-	 * @public
-	 */
-    function LazyLoad () {}
+     * LazyLoad object constructor function
+     * @public
+     */
+    function LazyLoad() {}
 
     $.fn.lazyload = function(options) {
         var elements = this;
         var $container;
-        var settings = {
-            threshold       : 0,
-            failure_limit   : 0,
-            event           : "scroll.lazyload",
-            effect          : "show",
-            container       : window,
-            data_attribute  : "original",
-            data_srcset     : "srcset",
-            skip_invisible  : false,
-            appear          : null,
-            load            : null,
-            placeholder     : "data:image/gif;base64,R0lGODdhAQABAPAAAMPDwwAAACwAAAAAAQABAAACAkQBADs="
-        };
 
         function update() {
             var counter = 0;
 
             elements.each(function() {
                 var $this = $(this);
-                if (settings.skip_invisible && !$this.is(":visible")) {
+                if (settings.skip_invisible && !$this.is(':visible')) {
                     return;
                 }
-                if ($.abovethetop(this, settings) ||
-                    $.leftofbegin(this, settings)) {
-                        /* Nothing. */
-                } else if (!$.belowthefold(this, settings) &&
-                    !$.rightoffold(this, settings)) {
-                        $this.trigger("appear");
-                        /* if we found an image we'll load, reset the counter */
-                        counter = 0;
+                if (
+                    $.abovethetop(this, settings) ||
+                    $.leftofbegin(this, settings)
+                ) {
+                    /* Nothing. */
+                } else if (
+                    !$.belowthefold(this, settings) &&
+                    !$.rightoffold(this, settings)
+                ) {
+                    $this.trigger('appear');
+                    /* if we found an image we'll load, reset the counter */
+                    counter = 0;
                 } else {
                     if (++counter > settings.failure_limit) {
                         return false;
                     }
                 }
             });
-
         }
 
-        if(options) {
+        if (options) {
             /* Maintain BC for a couple of versions. */
             if (undefined !== options.failurelimit) {
                 options.failure_limit = options.failurelimit;
@@ -79,11 +69,13 @@
         }
 
         /* Cache container as jQuery as object. */
-        $container = (settings.container === undefined ||
-                      settings.container === window) ? $window : $(settings.container);
+        $container =
+            settings.container === undefined || settings.container === window
+                ? $window
+                : $(settings.container);
 
         /* Fire one scroll event per scroll. Not one scroll event per image. */
-        if (0 === settings.event.indexOf("scroll")) {
+        if (0 === settings.event.indexOf('scroll')) {
             $container.off(settings.event).on(settings.event, function() {
                 return update();
             });
@@ -96,35 +88,46 @@
             self.loaded = false;
 
             /* If no src attribute given use data:uri. */
-            if ($self.attr("src") === undefined || $self.attr("src") === false) {
-                if ($self.is("img")) {
-                    $self.attr("src", settings.placeholder);
+            if (
+                $self.attr('src') === undefined ||
+                $self.attr('src') === false
+            ) {
+                if ($self.is('img')) {
+                    $self.attr('src', settings.placeholder);
                 }
             }
 
             /* When appear is triggered load original image. */
-            $self.one("appear", function() {
+            $self.one('appear', function() {
                 if (!this.loaded) {
                     if (settings.appear) {
                         var elements_left = elements.length;
                         settings.appear.call(self, elements_left, settings);
                     }
-                    $("<img />")
-                        .one("load", function() {
-                            var original = $self.attr("data-" + settings.data_attribute);
-                            var srcset = $self.attr("data-" + settings.data_srcset);
+                    $('<img />')
+                        .one('load', function() {
+                            var original = $self.attr(
+                                'data-' + settings.data_attribute
+                            );
+                            var srcset = $self.attr(
+                                'data-' + settings.data_srcset
+                            );
 
-                            if (original !== $self.attr("src")) {
+                            if (original !== $self.attr('src')) {
                                 $self.hide();
-                                if ($self.is("img")) {
-                                    $self.attr("src", original);
+                                if ($self.is('img')) {
+                                    $self.attr('src', original);
                                     if (srcset !== null) {
-                                        $self.attr("srcset", srcset);
+                                        $self.attr('srcset', srcset);
                                     }
-                                } if ($self.is("video")) {
-                                    $self.attr("poster", original);
+                                }
+                                if ($self.is('video')) {
+                                    $self.attr('poster', original);
                                 } else {
-                                    $self.css("background-image", "url('" + original + "')");
+                                    $self.css(
+                                        'background-image',
+                                        "url('" + original + "')"
+                                    );
                                 }
                                 $self[settings.effect](settings.effect_speed);
                             }
@@ -139,42 +142,47 @@
 
                             if (settings.load) {
                                 var elements_left = elements.length;
-                                settings.load.call(self, elements_left, settings);
+                                settings.load.call(
+                                    self,
+                                    elements_left,
+                                    settings
+                                );
                             }
                         })
-                        .bind("error", function(){
-                            $(self).trigger("error");
+                        .bind('error', function() {
+                            $(self).trigger('error');
                         })
                         .attr({
-                            "src": $self.attr("data-" + settings.data_attribute),
-                            "srcset": $self.attr("data-" + settings.data_srcset) || ""
+                            src: $self.attr('data-' + settings.data_attribute),
+                            srcset:
+                                $self.attr('data-' + settings.data_srcset) || ''
                         });
                 }
             });
 
             /* When wanted event is triggered load original image */
             /* by triggering appear.                              */
-            if (0 !== settings.event.indexOf("scroll")) {
+            if (0 !== settings.event.indexOf('scroll')) {
                 $self.off(settings.event).on(settings.event, function() {
                     if (!self.loaded) {
-                        $self.trigger("appear");
+                        $self.trigger('appear');
                     }
                 });
             }
         });
 
         /* Check if something appears when window is resized. */
-        $window.off("resize.lazyload").bind("resize.lazyload", function() {
+        $window.off('resize.lazyload').bind('resize.lazyload', function() {
             update();
         });
 
         /* With IOS5 force loading images when navigating with back button. */
         /* Non optimal workaround. */
-        if ((/(?:iphone|ipod|ipad).*os 5/gi).test(navigator.appVersion)) {
-            $window.on("pageshow", function(event) {
+        if (/(?:iphone|ipod|ipad).*os 5/gi.test(navigator.appVersion)) {
+            $window.on('pageshow', function(event) {
                 if (event.originalEvent && event.originalEvent.persisted) {
                     elements.each(function() {
-                        $(this).trigger("appear");
+                        $(this).trigger('appear');
                     });
                 }
             });
@@ -187,13 +195,49 @@
 
         return this;
     };
+    
+    /**
+     * Default settings
+     * @type {Object}
+     */
+    LazyLoad.defaults = {
+        threshold: 0,
+        failure_limit: 0,
+        event: 'scroll.lazyload',
+        effect: 'show',
+        container: window,
+        data_attribute: 'original',
+        data_srcset: 'srcset',
+        skip_invisible: false,
+        appear: null,
+        load: null,
+        placeholder:
+            'data:image/gif;base64,R0lGODdhAQABAPAAAMPDwwAAACwAAAAAAQABAAACAkQBADs='
+    };
 
-	/**
-	 * Returns the element's top accounting for the threshold
-	 * @param  {object} element   The element
-	 * @param  {number} threshold The optional threshold setting
-	 * @return {number}           The element's top
-	 */
+    /**
+     * Returns the converted options object accounting for deprecated property names
+     * @param  {object} options   The options object
+     * @return {object}           The converted options object
+     */
+    LazyLoad.prototype.convertDeprecatedOptions = function(options) {
+        if (undefined !== options.failurelimit) {
+            options.failure_limit = options.failurelimit;
+            delete options.failurelimit;
+        }
+        if (undefined !== options.effectspeed) {
+            options.effect_speed = options.effectspeed;
+            delete options.effectspeed;
+        }
+        return options;
+    };
+
+    /**
+     * Returns the element's top accounting for the threshold
+     * @param  {object} element   The element
+     * @param  {number} threshold The optional threshold setting
+     * @return {number}           The element's top
+     */
     LazyLoad.prototype.getElementTop = function(element, threshold) {
         return $(element).offset().top - (threshold || 0);
     };
@@ -206,18 +250,21 @@
      * @return {number}           The element's top
      */
     LazyLoad.prototype.getElementBottom = function(element, threshold) {
-        var elementTop = LazyLoad.prototype.getElementTop(element);
-        var elementHeight = LazyLoad.prototype.getElementHeight(element);
-        return elementTop + elementHeight + (threshold || 0);
-    }
+        var elementTop = LazyLoad.prototype.getElementTop(element),
+            elementHeight = LazyLoad.prototype.getElementHeight(element);
+
+        elementTop;
+        elementHeight;
+        return elementTop + elementHeight + (threshold || 0); /*?*/
+    };
 
     /**
-	 * Returns the element's left accounting for the threshold
-	 * @protected
-	 * @param   {object} element   The element
-	 * @param   {number} threshold The optional threshold setting
+     * Returns the element's left accounting for the threshold
+     * @protected
+     * @param   {object} element   The element
+     * @param   {number} threshold The optional threshold setting
      * @returns {number}           The element's left
-	 */
+     */
     LazyLoad.prototype.getElementLeft = function(element, threshold) {
         return $(element).offset().left - (threshold || 0);
     };
@@ -230,20 +277,10 @@
      * @return {number}           The element's left
      */
     LazyLoad.prototype.getElementRight = function(element, threshold) {
-        var elementLeft = LazyLoad.prototype.getElementLeft(element);
-        var elementWidth = LazyLoad.prototype.getElementWidth(element);
+        var elementLeft = LazyLoad.prototype.getElementLeft(element),
+            elementWidth = LazyLoad.prototype.getElementWidth(element);
         return elementLeft + elementWidth + (threshold || 0);
-    }
-
-    /**
-     * Returns the element's height
-     * @protected
-     * @param  {object} element The element
-     * @return {number}        The element's height
-     */
-    LazyLoad.prototype.getElementHeight = function(element) {
-        return element.innerHeight || $(element).height();
-    }
+    };
 
     /**
      * Returns the element's width
@@ -253,55 +290,65 @@
      */
     LazyLoad.prototype.getElementWidth = function(element) {
         return element.innerWidth || $(element).width();
-    }
+    };
 
     /**
-    * Returns the fold's top
-    * @protected
-    * @param   {object} container The container
-    * @returns {number}           The fold's top
-    */
+     * Returns the element's height
+     * @protected
+     * @param  {object} element The element
+     * @return {number}        The element's height
+     */
+    LazyLoad.prototype.getElementHeight = function(element) {
+        return element.innerHeight || $(element).height();
+    };
+
+    /**
+     * Returns the fold's top
+     * @protected
+     * @param   {object} container The container
+     * @returns {number}           The fold's top
+     */
     LazyLoad.prototype.getFoldTop = function(container) {
-        return (container === window
+        return container === window
             ? $(container).scrollTop()
-            : $(container).offset().top);
-    }
+            : $(container).offset().top;
+    };
 
     /**
-    * Returns the fold's bottom
-    * @protected
-    * @param   {object} container The container
-    * @returns {number}           The fold's bottom
-    */
+     * Returns the fold's bottom
+     * @protected
+     * @param   {object} container The container
+     * @returns {number}           The fold's bottom
+     */
     LazyLoad.prototype.getFoldBottom = function(container) {
         var foldTop = LazyLoad.prototype.getFoldTop(container),
             containerHeight = LazyLoad.prototype.getElementHeight(container);
         return foldTop + containerHeight;
-    }
+    };
 
     /**
-    * Returns the fold's left
-    * @protected
-    * @param   {object} container The container
-    * @returns {number}           The fold's left
-    */
+     * Returns the fold's left
+     * @protected
+     * @param   {object} container The container
+     * @returns {number}           The fold's left
+     */
     LazyLoad.prototype.getFoldLeft = function(container) {
-        return (container === window
+        return container === window
             ? $(container).scrollLeft()
-            : $(container).offset().left);
-    }
+            : $(container).offset().left;
+    };
 
     /**
-    * Returns the fold's right
-    * @protected
-    * @param   {object} container The container
-    * @returns {number}           The fold's right
-    */
+     * Returns the fold's right
+     * @protected
+     * @param   {object} container The container
+     * @returns {number}           The fold's right
+     */
     LazyLoad.prototype.getFoldRight = function(container) {
         var foldLeft = LazyLoad.prototype.getFoldLeft(container),
             containerWidth = LazyLoad.prototype.getElementWidth(container);
         return foldLeft + containerWidth;
-    }
+    };
 
     /**
      * Returns the element's container
@@ -313,32 +360,13 @@
         return container || window;
     };
 
-    /* Convenience methods in jQuery namespace.           */
-    /* Use as  $.belowthefold(element, {threshold : 100, container : window}) */
-
-    $.belowthefold = function(element, settings) {
-        var elementTop = LazyLoad.prototype.getElementTop(
-                element,
-                settings.threshold
-            ),
-            container = LazyLoad.prototype.getContainer(settings.container),
-            fold = LazyLoad.prototype.getFoldBottom(container);
-
-        return fold <= elementTop;
-    };
-
-    $.rightoffold = function(element, settings) {
-        var elementLeft = LazyLoad.prototype.getElementLeft(
-                element,
-                settings.threshold
-            ),
-            container = LazyLoad.prototype.getContainer(settings.container),
-            fold = LazyLoad.prototype.getFoldRight(container);
-
-        return fold <= elementLeft;
-    };
-
-    $.abovethetop = function(element, settings) {
+    /**
+     * Returns whether or not an element is above of the top
+     * @param  {object}  element  The element
+     * @param  {object}  settings The settings object
+     * @return {boolean}
+     */
+    LazyLoad.prototype.isAboveVisibleArea = function(element, settings) {
         var elementBottom = LazyLoad.prototype.getElementBottom(
                 element,
                 settings.threshold
@@ -349,7 +377,30 @@
         return fold <= elementBottom;
     };
 
-    $.leftofbegin = function(element, settings) {
+    /**
+     * Returns whether or not an element is above the fold
+     * @param  {object}  element  The element
+     * @param  {object}  settings The settings object
+     * @return {boolean}
+     */
+    LazyLoad.prototype.isBelowVisibleArea = function(element, settings) {
+        var elementTop = LazyLoad.prototype.getElementTop(
+                element,
+                settings.threshold
+            ),
+            container = LazyLoad.prototype.getContainer(settings.container),
+            fold = LazyLoad.prototype.getFoldBottom(container);
+
+        return fold <= elementTop;
+    };
+
+    /**
+     * Returns whether or not an element is left of the beginning
+     * @param  {object}  element  The element
+     * @param  {object}  settings The settings object
+     * @return {boolean}
+     */
+    LazyLoad.prototype.isLeftOfVisibleArea = function(element, settings) {
         var elementRight = LazyLoad.prototype.getElementRight(
                 element,
                 settings.threshold
@@ -360,31 +411,87 @@
         return fold <= elementRight;
     };
 
-    $.inviewport = function(element, settings) {
-         return !$.rightoffold(element, settings) && !$.leftofbegin(element, settings) &&
-                !$.belowthefold(element, settings) && !$.abovethetop(element, settings);
-     };
+    /**
+     * Returns whether or not an element is right of the fold
+     * @param  {object}  element  The element
+     * @param  {object}  settings The settings object
+     * @return {boolean}
+     */
+    LazyLoad.prototype.isRightOfVisibleArea = function(element, settings) {
+        var elementLeft = LazyLoad.prototype.getElementLeft(
+                element,
+                settings.threshold
+            ),
+            container = LazyLoad.prototype.getContainer(settings.container),
+            fold = LazyLoad.prototype.getFoldRight(container);
+
+        return fold <= elementLeft;
+    };
+
+    /**
+     * Returns whether or not an element is in visible area
+     * @param  {object}  element  The element
+     * @param  {object}  settings The settings object
+     * @return {boolean}
+     */
+    LazyLoad.prototype.isInVisibleArea = function(element, settings) {
+        return (
+            !LazyLoad.prototype.isAboveVisibleArea(element, settings) &&
+            !LazyLoad.prototype.isBelowVisibleArea(element, settings) &&
+            !LazyLoad.prototype.isLeftOfVisibleArea(element, settings) &&
+            !LazyLoad.prototype.isRightOfVisibleArea(element, settings)
+        );
+    };
 
     /* Custom selectors for your convenience.   */
     /* Use as $("img:below-the-fold").something() or */
     /* $("img").filter(":below-the-fold").something() which is faster */
 
-    $.extend($.expr[":"], {
-        "below-the-fold" : function(a) { return $.belowthefold(a, {threshold : 0}); },
-        "above-the-top"  : function(a) { return !$.belowthefold(a, {threshold : 0}); },
-        "right-of-screen": function(a) { return $.rightoffold(a, {threshold : 0}); },
-        "left-of-screen" : function(a) { return !$.rightoffold(a, {threshold : 0}); },
-        "in-viewport"    : function(a) { return $.inviewport(a, {threshold : 0}); },
+    $.extend($.expr[':'], {
+        'below-the-fold': function(a) {
+            return LazyLoad.prototype.isBelowVisibleArea(a, { threshold: 0 });
+        },
+        'above-the-top': function(a) {
+            // this seems wrong...
+            return !LazyLoad.prototype.isBelowVisibleArea(a, { threshold: 0 });
+        },
+        'right-of-screen': function(a) {
+            return LazyLoad.prototype.isRightOfVisibleArea(a, { threshold: 0 });
+        },
+        'left-of-screen': function(a) {
+            return !LazyLoad.prototype.isRightOfVisibleArea(a, {
+                threshold: 0
+            });
+        },
+        'in-viewport': function(a) {
+            return LazyLoad.prototype.isInVisibleArea(a, { threshold: 0 });
+        },
         /* Maintain BC for couple of versions. */
-        "above-the-fold" : function(a) { return !$.belowthefold(a, {threshold : 0}); },
-        "right-of-fold"  : function(a) { return $.rightoffold(a, {threshold : 0}); },
-        "left-of-fold"   : function(a) { return !$.rightoffold(a, {threshold : 0}); }
+        'above-the-fold': function(a) {
+            return !LazyLoad.prototype.isBelowVisibleArea(a, { threshold: 0 });
+        },
+        'right-of-fold': function(a) {
+            return LazyLoad.prototype.isRightOfVisibleArea(a, { threshold: 0 });
+        },
+        'left-of-fold': function(a) {
+            return !LazyLoad.prototype.isRightOfVisibleArea(a, {
+                threshold: 0
+            });
+        }
     });
+
+    /* Convenience methods in jQuery namespace.           */
+    /* Use as  $.belowthefold(element, {threshold : 100, container : window}) */
+    $.belowthefold = LazyLoad.prototype.isBelowVisibleArea;
+    $.rightoffold = LazyLoad.prototype.isRightOfVisibleArea;
+    $.abovethetop = LazyLoad.prototype.isAboveVisibleArea;
+    $.leftofbegin = LazyLoad.prototype.isLeftOfVisibleArea;
+
+    $.inviewport = LazyLoad.prototype.isInVisibleArea;
 
     /**
      * The public interface of LazyLoad object
      * @public
      */
     $.fn.lazyload.Constructor = LazyLoad;
-
 })(jQuery, window, document);
